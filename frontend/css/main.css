@@ -401,6 +401,7 @@ select.form-control {
   aspect-ratio: 2/3;
   border-radius: var(--radius-md);
   overflow: hidden;
+  transition: all 0.4s ease;
 }
 
 .movie-card .poster-wrap img {
@@ -408,6 +409,11 @@ select.form-control {
   height: 100%;
   object-fit: cover;
   transition: transform 0.5s ease;
+}
+
+.movie-card:hover .poster-wrap {
+  box-shadow: 0 10px 30px rgba(245, 166, 35, 0.25);
+  transform: translateY(-5px);
 }
 
 .movie-card:hover .poster-wrap img {

@@ -103,9 +103,93 @@
             <div class="total-label">Total Price</div>
             <div class="total-price" id="total-price">₹0</div>
           </div>
-          <button class="btn btn-primary btn-lg" id="confirm-btn" onclick="confirmBooking()">Confirm Booking</button>
+          <button class="btn btn-primary btn-lg" id="confirm-btn" onclick="openPaymentModal()">Proceed to Payment</button>
         </div>
       `;
+    }
+
+    /* ── Payment Modal UI ─────────────────────────────────────────────────── */
+    const paymentModalHTML = `
+      <div class="modal-backdrop hidden" id="payment-modal">
+        <div class="modal glass-card" style="max-width: 400px;">
+          <h3 style="display:flex; justify-content:space-between; align-items:center;">
+            Payment Details
+            <span style="cursor:pointer; color:var(--text-muted);" onclick="closePaymentModal()">✕</span>
+          </h3>
+          <p class="text-muted" style="margin-bottom: 1.5rem; font-size: 0.9rem;">
+            This is a mock payment gateway for testing. No real money is charged.
+          </p>
+          <div class="form-group">
+            <label>Card Number</label>
+            <input type="text" class="form-control" value="4111 1111 1111 1111" readonly style="font-family:monospace; letter-spacing:1px; background:rgba(0,0,0,0.2);">
+          </div>
+          <div style="display:flex; gap:1rem; margin-bottom: 1.5rem;">
+            <div class="form-group" style="flex:1;">
+              <label>Expiry</label>
+              <input type="text" class="form-control" value="12/28" readonly style="background:rgba(0,0,0,0.2);">
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label>CVV</label>
+              <input type="password" class="form-control" value="123" readonly style="background:rgba(0,0,0,0.2);">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="pay-btn" style="width:100%;" onclick="processPayment()">
+            Pay <span id="pay-amount"></span>
+          </button>
+          
+          <div id="payment-loader" class="hidden" style="text-align:center; padding: 2rem 0;">
+            <div class="spinner" style="margin: 0 auto 1rem auto; width: 30px; height: 30px;"></div>
+            <p style="color:var(--accent-gold); font-weight: 500;">Processing Payment...</p>
+            <p style="font-size: 0.8rem; color:var(--text-muted);">Please do not refresh the page.</p>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', paymentModalHTML);
+
+    function openPaymentModal() {
+      if (selectedSeats.length === 0) return;
+      document.getElementById("pay-amount").textContent = `₹${selectedSeats.length * showData.price}`;
+      document.getElementById("payment-modal").classList.remove("hidden");
+    }
+
+    function closePaymentModal() {
+      if (document.getElementById("pay-btn").disabled) return; // Prevent closing while processing
+      document.getElementById("payment-modal").classList.add("hidden");
+    }
+
+    async function processPayment() {
+      const payBtn = document.getElementById("pay-btn");
+      const loader = document.getElementById("payment-loader");
+      
+      // Hide form, show loader
+      payBtn.style.display = "none";
+      document.querySelectorAll('#payment-modal .form-group').forEach(el => el.style.display = 'none');
+      loader.classList.remove("hidden");
+
+      // Simulate 2 seconds of payment processing network delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Proceed with actual booking API call
+      try {
+        const result = await api.post("/bookings", {
+          show_id: showId,
+          seats: selectedSeats,
+        });
+        
+        // Add fake transaction ID
+        result.transaction_id = "TXN" + Math.floor(100000000 + Math.random() * 900000000);
+        
+        sessionStorage.setItem("booking_confirmation", JSON.stringify(result));
+        window.location.href = "/booking_confirm.html";
+      } catch (e) {
+        showToast(e.message, "error");
+        closePaymentModal();
+        // Reset modal state
+        payBtn.style.display = "block";
+        document.querySelectorAll('#payment-modal .form-group').forEach(el => el.style.display = 'block');
+        loader.classList.add("hidden");
+      }
     }
 
     function toggleSeat(seatId, status) {
@@ -144,26 +228,7 @@
       }
     }
 
-    async function confirmBooking() {
-      if (selectedSeats.length === 0) return;
-      const btn = document.getElementById("confirm-btn");
-      btn.disabled = true;
-      btn.textContent = "Booking...";
 
-      try {
-        const result = await api.post("/bookings", {
-          show_id: showId,
-          seats: selectedSeats,
-        });
-        // Store confirmation data for the next page
-        sessionStorage.setItem("booking_confirmation", JSON.stringify(result));
-        window.location.href = "/booking_confirm.html";
-      } catch (e) {
-        showToast(e.message, "error");
-        btn.disabled = false;
-        btn.textContent = "Confirm Booking";
-      }
-    }
 
     loadSeatMap();
   </script>

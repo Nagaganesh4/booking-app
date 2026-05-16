@@ -18,8 +18,36 @@
     .ticket-info .label { color: var(--text-muted); font-size: 0.85rem; }
     .ticket-info .value { font-weight: 600; font-size: 0.95rem; }
     .ticket-info .value.gold { color: var(--accent-gold); font-family: 'Bebas Neue'; font-size: 1.3rem; }
-    .btn-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem; }
+    
+    /* Printable Ticket Styles */
+    #ticket-container {
+      background: #fff;
+      color: #000;
+      width: 100%;
+      max-width: 600px;
+      margin: 2rem auto;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      position: relative;
+      display: none; /* Hidden until rendered or printed */
+    }
+    .ticket-header { background: var(--bg-primary); color: #fff; padding: 1.5rem; text-align: center; }
+    .ticket-header h2 { font-family: 'Bebas Neue', cursive; font-size: 2.5rem; margin: 0; letter-spacing: 2px; color: var(--accent-gold); }
+    .ticket-body { padding: 2rem; display: flex; gap: 2rem; background: #fff; }
+    .ticket-details { flex: 1; text-align: left; }
+    .ticket-qr { width: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 2px dashed #ccc; padding-left: 1.5rem; }
+    .ticket-qr img { width: 100px; height: 100px; margin-bottom: 0.5rem; }
+    .ticket-row { margin-bottom: 1rem; }
+    .ticket-label { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+    .ticket-val { font-size: 1.1rem; font-weight: 700; color: #111; }
+    .ticket-val.movie { font-size: 1.5rem; color: #000; font-family: 'Bebas Neue', cursive; letter-spacing: 1px; }
+    .cutout { position: absolute; width: 30px; height: 30px; background: var(--gradient-hero); border-radius: 50%; top: 50%; transform: translateY(-50%); }
+    .cutout.left { left: -15px; }
+    .cutout.right { right: -15px; }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
   <div class="confirm-page">
@@ -46,6 +74,7 @@
         <p class="subtitle">Your tickets have been booked successfully</p>
         <div class="ticket-info">
           <div class="row"><span class="label">Booking ID</span><span class="value">${data.booking_id || "—"}</span></div>
+          <div class="row"><span class="label">Transaction ID</span><span class="value">${data.transaction_id || "—"}</span></div>
           <div class="row"><span class="label">Movie</span><span class="value">${data.movie_title || "—"}</span></div>
           <div class="row"><span class="label">Theater</span><span class="value">${data.theater_name || "—"}</span></div>
           <div class="row"><span class="label">Date & Time</span><span class="value">${dateStr} ${timeStr}</span></div>
@@ -53,11 +82,88 @@
           <div class="row"><span class="label">Total Paid</span><span class="value gold">₹${data.total_price || 0}</span></div>
         </div>
         <div class="btn-group">
-          <a href="/my_bookings.html" class="btn btn-primary">View My Bookings</a>
-          <a href="/" class="btn btn-ghost">Browse More Movies</a>
+          <button class="btn btn-primary" onclick="downloadTicket()">Download PDF Ticket</button>
+          <a href="/my_bookings.html" class="btn btn-ghost">View My Bookings</a>
         </div>
       `;
+
+      // Build hidden ticket for PDF generation
+      const ticketHTML = `
+        <div id="pdf-ticket" style="background:#fff; color:#000; width:100%; font-family:sans-serif;">
+          <div style="background:#0a0e17; padding:20px; text-align:center;">
+            <h1 style="color:#f5a623; margin:0; font-family:'Bebas Neue', cursive; font-size:36px; letter-spacing:3px;">CINEBOOK</h1>
+            <p style="color:#fff; margin:5px 0 0 0; font-size:14px;">Official Movie Ticket</p>
+          </div>
+          <div style="padding:30px; display:flex; justify-content:space-between;">
+            <div style="flex:1;">
+              <div style="margin-bottom:15px;">
+                <div style="font-size:12px; color:#666; text-transform:uppercase;">Movie</div>
+                <div style="font-size:24px; font-weight:bold; font-family:'Bebas Neue', cursive;">${data.movie_title || "—"}</div>
+              </div>
+              <div style="margin-bottom:15px;">
+                <div style="font-size:12px; color:#666; text-transform:uppercase;">Theater</div>
+                <div style="font-size:16px; font-weight:bold;">${data.theater_name || "—"}</div>
+              </div>
+              <div style="display:flex; gap:30px; margin-bottom:15px;">
+                <div>
+                  <div style="font-size:12px; color:#666; text-transform:uppercase;">Date</div>
+                  <div style="font-size:16px; font-weight:bold;">${dateStr}</div>
+                </div>
+                <div>
+                  <div style="font-size:12px; color:#666; text-transform:uppercase;">Time</div>
+                  <div style="font-size:16px; font-weight:bold;">${timeStr}</div>
+                </div>
+              </div>
+              <div style="display:flex; gap:30px;">
+                <div>
+                  <div style="font-size:12px; color:#666; text-transform:uppercase;">Seats</div>
+                  <div style="font-size:16px; font-weight:bold; color:#27ae60;">${(data.seats || []).join(", ")}</div>
+                </div>
+                <div>
+                  <div style="font-size:12px; color:#666; text-transform:uppercase;">Amount Paid</div>
+                  <div style="font-size:16px; font-weight:bold;">₹${data.total_price || 0}</div>
+                </div>
+              </div>
+            </div>
+            <div style="width:120px; border-left:2px dashed #ccc; padding-left:20px; text-align:center; display:flex; flex-direction:column; justify-content:center;">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${data.booking_id}" alt="QR Code" style="width:100px; height:100px; margin-bottom:10px;">
+              <div style="font-size:10px; color:#666;">ID: ${data.booking_id.substring(0,8).toUpperCase()}</div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      const hiddenDiv = document.createElement("div");
+      hiddenDiv.id = "hidden-ticket-container";
+      hiddenDiv.style.position = "absolute";
+      hiddenDiv.style.left = "-9999px";
+      hiddenDiv.innerHTML = ticketHTML;
+      document.body.appendChild(hiddenDiv);
+
       sessionStorage.removeItem("booking_confirmation");
+    }
+
+    function downloadTicket() {
+      const element = document.getElementById("pdf-ticket");
+      if (!element) return;
+      
+      const opt = {
+        margin:       0.5,
+        filename:     `CineBook_Ticket_${data.booking_id.substring(0,6)}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+      };
+      
+      const btn = document.querySelector(".btn-primary");
+      const originalText = btn.textContent;
+      btn.textContent = "Generating PDF...";
+      btn.disabled = true;
+
+      html2pdf().set(opt).from(element).save().then(() => {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      });
     }
   </script>
 </body>
