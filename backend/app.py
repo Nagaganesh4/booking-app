@@ -1,4 +1,9 @@
 import os
+import sys
+
+# Ensure backend/ is on the Python path so local imports work on Vercel
+sys.path.insert(0, os.path.dirname(__file__))
+
 import certifi
 import cloudinary
 from flask import Flask, send_from_directory, send_file
@@ -20,6 +25,7 @@ cloudinary.config(
 # ── Flask app factory ──────────────────────────────────────────────────────────
 def create_app():
     frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
+    frontend_dir = os.path.abspath(frontend_dir)
     app = Flask(__name__, static_folder=frontend_dir, static_url_path="")
     app.config["SECRET_KEY"] = SECRET_KEY
     CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -29,8 +35,11 @@ def create_app():
                          serverSelectionTimeoutMS=5000,
                          connectTimeoutMS=5000,
                          socketTimeoutMS=10000)
-    db = client.get_default_database()
-    if db.name in ("admin", None):
+    try:
+        db = client.get_default_database()
+    except Exception:
+        db = client["moviebooking"]
+    if db.name in ("admin", "test", None):
         db = client["moviebooking"]
 
     # TTL index for seat locks
