@@ -72,6 +72,11 @@ def create_app():
             return send_from_directory(frontend_dir, path)
         return send_file(os.path.join(frontend_dir, "index.html"))
 
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        import traceback
+        return {"error": str(e), "trace": traceback.format_exc()}, 500
+
     return app
 
 app = create_app()
