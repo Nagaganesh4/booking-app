@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Details — CineBook</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .movie-detail { padding-top: calc(var(--nav-height) + 2rem); max-width: var(--max-width); margin: 0 auto; padding-left: 2rem; padding-right: 2rem; padding-bottom: 3rem; }
+    .movie-hero { display: flex; gap: 2.5rem; margin-bottom: 3rem; }
+    .movie-hero .poster { width: 300px; min-width: 260px; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg); }
+    .movie-hero .poster img { width: 100%; height: auto; }
+    .movie-hero .info { flex: 1; }
+    .movie-hero .info h1 { font-family: 'Bebas Neue', cursive; font-size: 2.8rem; letter-spacing: 2px; margin-bottom: 0.5rem; }
+    .movie-hero .info .meta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 1rem; }
+    .movie-hero .info .description { color: var(--text-secondary); line-height: 1.7; margin-bottom: 1.5rem; max-width: 600px; }
+    .movie-hero .info .cast { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .movie-hero .info .cast strong { color: var(--text-secondary); }
+    .show-list { display: flex; flex-direction: column; gap: 1rem; }
+    .show-card { display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 1.5rem; flex-wrap: wrap; gap: 1rem; }
+    .show-card .show-info-left { display: flex; flex-direction: column; gap: 4px; }
+    .show-card .theater-name { font-weight: 600; font-size: 1.05rem; }
+    .show-card .show-meta { display: flex; gap: 1rem; font-size: 0.85rem; color: var(--text-secondary); }
+    @media (max-width: 768px) {
+      .movie-hero { flex-direction: column; align-items: center; text-align: center; }
+      .movie-hero .poster { width: 220px; min-width: auto; }
+      .movie-hero .info .meta-row { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" class="logo"><span class="icon">🎬</span><span>CINEBOOK</span></a>
+      <div class="nav-links">
+        <a href="/">Movies</a>
+        <a href="/my_bookings.html">My Bookings</a>
+        <div id="auth-links"></div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="movie-detail" id="movie-detail">
+    <div class="spinner"></div>
+  </div>
+
+  <footer class="footer"><p>© 2026 CineBook. All rights reserved.</p></footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const movieId = new URLSearchParams(window.location.search).get("id");
+
+    async function load() {
+      if (!movieId) { window.location.href = "/"; return; }
+      try {
+        const movie = await api.get(`/movies/${movieId}`);
+        let shows = [];
+        try { shows = await api.get(`/shows?movie_id=${movieId}`); } catch(e) {}
+
+        const container = document.getElementById("movie-detail");
+        container.innerHTML = `
+          <div class="movie-hero">
+            <div class="poster">
+              <img src="${movie.poster_url || 'https://via.placeholder.com/300x450/1a1f2e/6b7280?text=No+Poster'}" alt="${movie.title}">
+            </div>
+            <div class="info">
+              <h1>${movie.title}</h1>
+              <div class="meta-row">
+                <span class="badge badge-genre">${movie.genre}</span>
+                ${movie.rating ? `<span class="badge badge-rating">⭐ ${movie.rating}</span>` : ""}
+                ${movie.duration ? `<span class="badge" style="background:rgba(255,255,255,0.08);color:var(--text-secondary);">⏱ ${movie.duration}</span>` : ""}
+                ${movie.language ? `<span class="badge" style="background:rgba(255,255,255,0.08);color:var(--text-secondary);">🌐 ${movie.language}</span>` : ""}
+              </div>
+              ${movie.description ? `<p class="description">${movie.description}</p>` : ""}
+              ${movie.cast && movie.cast.length ? `<p class="cast"><strong>Cast:</strong> ${movie.cast.join(", ")}</p>` : ""}
+            </div>
+          </div>
+
+          <div class="section-title"><span>🎭 Available Shows</span><span class="line"></span></div>
+          <div class="show-list" id="show-list">
+            ${shows.length === 0 ? '<p style="color:var(--text-muted);">No shows scheduled for this movie yet.</p>' : ""}
+          </div>
+        `;
+
+        const showList = document.getElementById("show-list");
+        shows.forEach(s => {
+          const dt = s.datetime ? new Date(s.datetime) : null;
+          const dateStr = dt ? dt.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" }) : "TBD";
+          const timeStr = dt ? dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "";
+
+          const div = document.createElement("div");
+          div.className = "card show-card";
+          div.innerHTML = `
+            <div class="show-info-left">
+              <span class="theater-name">🏢 ${s.theater_name}</span>
+              <span class="show-meta">
+                <span>📍 ${s.theater_city}</span>
+                <span>🖥 Screen ${s.screen_no}</span>
+                <span>📅 ${dateStr}</span>
+                <span>🕐 ${timeStr}</span>
+              </span>
+            </div>
+            <div style="display:flex;align-items:center;gap:1rem;">
+              <span style="font-family:'Bebas Neue';font-size:1.4rem;color:var(--accent-gold);">₹${s.price}</span>
+              <button class="btn btn-primary btn-sm" onclick="selectShow('${s.id}')">Select Seats</button>
+            </div>
+          `;
+          showList.appendChild(div);
+        });
+      } catch (e) {
+        document.getElementById("movie-detail").innerHTML = `<p style="color:var(--accent-red);text-align:center;margin-top:4rem;">${e.message}</p>`;
+      }
+    }
+
+    function selectShow(showId) {
+      if (!api.isLoggedIn()) {
+        showToast("Please login to book tickets", "error");
+        setTimeout(() => window.location.href = "/login.html", 1000);
+        return;
+      }
+      window.location.href = `/seat_selection.html?show_id=${showId}`;
+    }
+
+    load();
+  </script>
+</body>
+</html>

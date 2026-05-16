@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — CineBook</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/admin-x9k2/css/admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-logo">
+        <h2>🎬 CineBook</h2>
+        <small>Admin Panel</small>
+      </div>
+      <nav>
+        <a href="/admin-x9k2/dashboard.html" class="active"><span>📊</span><span>Dashboard</span></a>
+        <a href="/admin-x9k2/movies.html"><span>🎬</span><span>Movies</span></a>
+        <a href="/admin-x9k2/theaters.html"><span>🏢</span><span>Theaters</span></a>
+        <a href="/admin-x9k2/shows.html"><span>🎭</span><span>Shows</span></a>
+        <a href="/admin-x9k2/bookings.html"><span>🎟</span><span>Bookings</span></a>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="btn btn-sm btn-ghost" style="width:100%;" onclick="api.logout()">🚪 Logout</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="admin-main">
+      <div class="admin-header">
+        <h1>📊 Dashboard</h1>
+        <span class="text-muted" id="admin-name"></span>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-icon">🎟</div><div class="stat-value" id="stat-bookings">—</div><div class="stat-label">Total Bookings</div></div>
+        <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" id="stat-revenue">—</div><div class="stat-label">Revenue</div></div>
+        <div class="stat-card"><div class="stat-icon">🎬</div><div class="stat-value" id="stat-movies">—</div><div class="stat-label">Active Movies</div></div>
+        <div class="stat-card"><div class="stat-icon">🏢</div><div class="stat-value" id="stat-theaters">—</div><div class="stat-label">Theaters</div></div>
+        <div class="stat-card"><div class="stat-icon">🎭</div><div class="stat-value" id="stat-shows">—</div><div class="stat-label">Shows</div></div>
+        <div class="stat-card"><div class="stat-icon">❌</div><div class="stat-value" id="stat-cancelled">—</div><div class="stat-label">Cancelled</div></div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-container">
+        <h3>📈 Top Movies by Bookings</h3>
+        <canvas id="topMoviesChart" height="100"></canvas>
+      </div>
+
+      <!-- Recent Bookings -->
+      <h3 style="margin-bottom:1rem;color:var(--text-secondary);">🕐 Recent Bookings</h3>
+      <table class="admin-table" id="recent-table">
+        <thead><tr><th>User</th><th>Movie</th><th>Theater</th><th>Seats</th><th>Amount</th><th>Status</th></tr></thead>
+        <tbody id="recent-body"><tr><td colspan="6" style="text-align:center;">Loading...</td></tr></tbody>
+      </table>
+    </main>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    if (!api.isAdmin()) window.location.href = "/admin-x9k2/login.html";
+    const user = api.getUser();
+    document.getElementById("admin-name").textContent = `Welcome, ${user?.name || "Admin"}`;
+
+    async function loadDashboard() {
+      try {
+        const data = await api.get("/admin/analytics");
+        document.getElementById("stat-bookings").textContent = data.total_bookings;
+        document.getElementById("stat-revenue").textContent = `₹${data.total_revenue.toLocaleString()}`;
+        document.getElementById("stat-movies").textContent = data.total_movies;
+        document.getElementById("stat-theaters").textContent = data.total_theaters;
+        document.getElementById("stat-shows").textContent = data.total_shows;
+        document.getElementById("stat-cancelled").textContent = data.cancelled_bookings;
+
+        // Chart
+        if (data.top_movies && data.top_movies.length > 0) {
+          new Chart(document.getElementById("topMoviesChart"), {
+            type: "bar",
+            data: {
+              labels: data.top_movies.map(m => m.movie),
+              datasets: [{
+                label: "Bookings",
+                data: data.top_movies.map(m => m.bookings),
+                backgroundColor: "rgba(245,166,35,0.6)",
+                borderColor: "rgba(245,166,35,1)",
+                borderWidth: 1,
+                borderRadius: 6,
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: { beginAtZero: true, ticks: { color: "#6b7280" }, grid: { color: "rgba(255,255,255,0.05)" } },
+                x: { ticks: { color: "#a0aec0" }, grid: { display: false } }
+              }
+            }
+          });
+        }
+
+        // Recent bookings
+        const tbody = document.getElementById("recent-body");
+        if (data.recent_bookings.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No bookings yet</td></tr>`;
+        } else {
+          tbody.innerHTML = data.recent_bookings.map(b => `
+            <tr>
+              <td>${b.user_name}<br><small style="color:var(--text-muted);">${b.user_email}</small></td>
+              <td>${b.movie_title}</td>
+              <td>${b.theater_name}</td>
+              <td>${(b.seats || []).join(", ")}</td>
+              <td style="color:var(--accent-gold);font-weight:600;">₹${b.total_price}</td>
+              <td><span class="status-badge status-${b.status}">${b.status}</span></td>
+            </tr>
+          `).join("");
+        }
+      } catch (e) {
+        showToast(e.message, "error");
+      }
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Confirmed — CineBook</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .confirm-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--gradient-hero); padding: 2rem; }
+    .confirm-card { max-width: 500px; width: 100%; padding: 3rem 2.5rem; text-align: center; }
+    .checkmark { width: 80px; height: 80px; border-radius: 50%; background: rgba(39,174,96,0.15); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 2.5rem; animation: scaleIn 0.5s ease; }
+    @keyframes scaleIn { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+    .confirm-card h2 { font-family: 'Bebas Neue', cursive; font-size: 2.2rem; letter-spacing: 2px; color: var(--accent-green); margin-bottom: 0.5rem; }
+    .confirm-card .subtitle { color: var(--text-secondary); margin-bottom: 2rem; }
+    .ticket-info { text-align: left; background: var(--bg-input); border-radius: var(--radius-sm); padding: 1.5rem; margin-bottom: 2rem; }
+    .ticket-info .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color); }
+    .ticket-info .row:last-child { border-bottom: none; }
+    .ticket-info .label { color: var(--text-muted); font-size: 0.85rem; }
+    .ticket-info .value { font-weight: 600; font-size: 0.95rem; }
+    .ticket-info .value.gold { color: var(--accent-gold); font-family: 'Bebas Neue'; font-size: 1.3rem; }
+    .btn-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <div class="confirm-page">
+    <div class="glass-card confirm-card" id="confirm-card">
+      <div class="spinner"></div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    const data = JSON.parse(sessionStorage.getItem("booking_confirmation") || "null");
+    const card = document.getElementById("confirm-card");
+
+    if (!data) {
+      card.innerHTML = `<p style="color:var(--text-muted);">No booking data found.</p><a href="/" class="btn btn-primary mt-2">Back to Home</a>`;
+    } else {
+      const dt = data.show_datetime ? new Date(data.show_datetime) : null;
+      const dateStr = dt ? dt.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" }) : "—";
+      const timeStr = dt ? dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "";
+
+      card.innerHTML = `
+        <div class="checkmark">✓</div>
+        <h2>Booking Confirmed!</h2>
+        <p class="subtitle">Your tickets have been booked successfully</p>
+        <div class="ticket-info">
+          <div class="row"><span class="label">Booking ID</span><span class="value">${data.booking_id || "—"}</span></div>
+          <div class="row"><span class="label">Movie</span><span class="value">${data.movie_title || "—"}</span></div>
+          <div class="row"><span class="label">Theater</span><span class="value">${data.theater_name || "—"}</span></div>
+          <div class="row"><span class="label">Date & Time</span><span class="value">${dateStr} ${timeStr}</span></div>
+          <div class="row"><span class="label">Seats</span><span class="value">${(data.seats || []).join(", ")}</span></div>
+          <div class="row"><span class="label">Total Paid</span><span class="value gold">₹${data.total_price || 0}</span></div>
+        </div>
+        <div class="btn-group">
+          <a href="/my_bookings.html" class="btn btn-primary">View My Bookings</a>
+          <a href="/" class="btn btn-ghost">Browse More Movies</a>
+        </div>
+      `;
+      sessionStorage.removeItem("booking_confirmation");
+    }
+  </script>
+</body>
+</html>

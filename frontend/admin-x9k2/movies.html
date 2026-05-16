@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Movies — Admin</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/admin-x9k2/css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="sidebar-logo"><h2>🎬 CineBook</h2><small>Admin Panel</small></div>
+      <nav>
+        <a href="/admin-x9k2/dashboard.html"><span>📊</span><span>Dashboard</span></a>
+        <a href="/admin-x9k2/movies.html" class="active"><span>🎬</span><span>Movies</span></a>
+        <a href="/admin-x9k2/theaters.html"><span>🏢</span><span>Theaters</span></a>
+        <a href="/admin-x9k2/shows.html"><span>🎭</span><span>Shows</span></a>
+        <a href="/admin-x9k2/bookings.html"><span>🎟</span><span>Bookings</span></a>
+      </nav>
+      <div class="sidebar-footer"><button class="btn btn-sm btn-ghost" style="width:100%;" onclick="api.logout()">🚪 Logout</button></div>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-header">
+        <h1>🎬 Manage Movies</h1>
+        <button class="btn btn-primary" onclick="showAddForm()">+ Add Movie</button>
+      </div>
+
+      <!-- Add/Edit Form (hidden by default) -->
+      <div class="glass-card" id="movie-form-card" style="display:none;padding:2rem;margin-bottom:2rem;">
+        <h3 id="form-title" style="margin-bottom:1rem;">Add New Movie</h3>
+        <form id="movie-form" class="admin-form">
+          <input type="hidden" id="edit-id">
+          <div class="form-row">
+            <div class="form-group"><label>Title *</label><input type="text" id="f-title" class="form-control" required></div>
+            <div class="form-group"><label>Genre</label><input type="text" id="f-genre" class="form-control" placeholder="e.g. Action, Sci-Fi"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Language</label><input type="text" id="f-language" class="form-control" value="Hindi"></div>
+            <div class="form-group"><label>Duration</label><input type="text" id="f-duration" class="form-control" placeholder="e.g. 2h 30m"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Rating (0-10)</label><input type="number" id="f-rating" class="form-control" step="0.1" min="0" max="10"></div>
+            <div class="form-group"><label>Cast (comma separated)</label><input type="text" id="f-cast" class="form-control" placeholder="Actor 1, Actor 2"></div>
+          </div>
+          <div class="form-group"><label>Description</label><textarea id="f-description" class="form-control" rows="3" placeholder="Movie description..."></textarea></div>
+          <div class="form-group"><label>Poster</label><input type="file" id="f-poster" class="form-control" accept="image/*"></div>
+          <div class="form-group"><label>Or Poster URL</label><input type="text" id="f-poster-url" class="form-control" placeholder="https://..."></div>
+          <div style="display:flex;gap:1rem;margin-top:1rem;">
+            <button type="submit" class="btn btn-primary" id="save-btn">Save Movie</button>
+            <button type="button" class="btn btn-ghost" onclick="hideForm()">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Movies Table -->
+      <table class="admin-table">
+        <thead><tr><th>Poster</th><th>Title</th><th>Genre</th><th>Language</th><th>Rating</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="movies-body"><tr><td colspan="7" style="text-align:center;">Loading...</td></tr></tbody>
+      </table>
+    </main>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    if (!api.isAdmin()) window.location.href = "/admin-x9k2/login.html";
+
+    async function loadMovies() {
+      try {
+        const movies = await api.get("/movies/");
+        const tbody = document.getElementById("movies-body");
+        if (movies.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No movies added yet</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = movies.map(m => `
+          <tr>
+            <td><img src="${m.poster_url || ''}" style="width:45px;height:65px;object-fit:cover;border-radius:4px;" onerror="this.style.display='none'"></td>
+            <td style="font-weight:600;">${m.title}</td>
+            <td><span class="badge badge-genre">${m.genre}</span></td>
+            <td>${m.language}</td>
+            <td>⭐ ${m.rating}</td>
+            <td><span class="badge ${m.is_active ? 'badge-rating' : ''}" style="${!m.is_active ? 'background:rgba(231,76,94,0.15);color:#ff8a8a;' : ''}">${m.is_active ? 'Active' : 'Hidden'}</span></td>
+            <td>
+              <button class="btn btn-sm btn-ghost" onclick='editMovie(${JSON.stringify(m).replace(/'/g,"&#39;")})'>Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteMovie('${m.id}')">Delete</button>
+            </td>
+          </tr>
+        `).join("");
+      } catch (e) { showToast(e.message, "error"); }
+    }
+
+    function showAddForm() {
+      document.getElementById("movie-form-card").style.display = "block";
+      document.getElementById("form-title").textContent = "Add New Movie";
+      document.getElementById("movie-form").reset();
+      document.getElementById("edit-id").value = "";
+    }
+
+    function hideForm() {
+      document.getElementById("movie-form-card").style.display = "none";
+    }
+
+    function editMovie(m) {
+      showAddForm();
+      document.getElementById("form-title").textContent = "Edit Movie";
+      document.getElementById("edit-id").value = m.id;
+      document.getElementById("f-title").value = m.title;
+      document.getElementById("f-genre").value = m.genre;
+      document.getElementById("f-language").value = m.language;
+      document.getElementById("f-duration").value = m.duration;
+      document.getElementById("f-rating").value = m.rating;
+      document.getElementById("f-cast").value = (m.cast || []).join(", ");
+      document.getElementById("f-description").value = m.description;
+      document.getElementById("f-poster-url").value = m.poster_url || "";
+    }
+
+    document.getElementById("movie-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("save-btn");
+      btn.disabled = true; btn.textContent = "Saving...";
+
+      const editId = document.getElementById("edit-id").value;
+      const file = document.getElementById("f-poster").files[0];
+      const castText = document.getElementById("f-cast").value;
+      const castArr = castText ? castText.split(",").map(c => c.trim()) : [];
+
+      try {
+        if (file) {
+          const fd = new FormData();
+          fd.append("title", document.getElementById("f-title").value);
+          fd.append("genre", document.getElementById("f-genre").value);
+          fd.append("language", document.getElementById("f-language").value);
+          fd.append("duration", document.getElementById("f-duration").value);
+          fd.append("rating", document.getElementById("f-rating").value || "0");
+          fd.append("description", document.getElementById("f-description").value);
+          fd.append("poster", file);
+          if (editId) {
+            await api.request("PUT", `/movies/${editId}`, fd, true);
+          } else {
+            await api.request("POST", "/movies/", fd, true);
+          }
+        } else {
+          const body = {
+            title: document.getElementById("f-title").value,
+            genre: document.getElementById("f-genre").value,
+            language: document.getElementById("f-language").value,
+            duration: document.getElementById("f-duration").value,
+            rating: parseFloat(document.getElementById("f-rating").value) || 0,
+            description: document.getElementById("f-description").value,
+            poster_url: document.getElementById("f-poster-url").value,
+            cast: castArr,
+          };
+          if (editId) {
+            await api.put(`/movies/${editId}`, body);
+          } else {
+            await api.post("/movies/", body);
+          }
+        }
+        showToast(editId ? "Movie updated!" : "Movie added!", "success");
+        hideForm();
+        loadMovies();
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+      btn.disabled = false; btn.textContent = "Save Movie";
+    });
+
+    async function deleteMovie(id) {
+      if (!confirm("Remove this movie from listings?")) return;
+      try {
+        await api.delete(`/movies/${id}`);
+        showToast("Movie removed", "success");
+        loadMovies();
+      } catch (e) { showToast(e.message, "error"); }
+    }
+
+    loadMovies();
+  </script>
+</body>
+</html>

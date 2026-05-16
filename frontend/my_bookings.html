@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Bookings — CineBook</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .bookings-page { padding-top: calc(var(--nav-height) + 2rem); max-width: 900px; margin: 0 auto; padding-left: 2rem; padding-right: 2rem; padding-bottom: 3rem; }
+    .booking-card { padding: 1.5rem; margin-bottom: 1rem; display: flex; gap: 1.5rem; align-items: flex-start; }
+    .booking-card .poster-thumb { width: 80px; height: 120px; border-radius: var(--radius-sm); overflow: hidden; flex-shrink: 0; }
+    .booking-card .poster-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .booking-card .booking-details { flex: 1; }
+    .booking-card .booking-details h3 { font-size: 1.1rem; margin-bottom: 4px; }
+    .booking-card .booking-meta { display: flex; flex-wrap: wrap; gap: 1rem; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px; }
+    .booking-card .seats-display { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+    .booking-card .seat-chip { background: rgba(245,166,35,0.12); color: var(--accent-gold); padding: 2px 8px; border-radius: 3px; font-size: 0.75rem; font-weight: 600; }
+    .booking-card .booking-actions { display: flex; align-items: center; gap: 1rem; }
+    .booking-card .price { font-family: 'Bebas Neue'; font-size: 1.5rem; color: var(--accent-gold); }
+    .status-badge { padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .status-confirmed { background: rgba(39,174,96,0.15); color: #6ee7a0; }
+    .status-cancelled { background: rgba(231,76,94,0.15); color: #ff8a8a; }
+    .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+    .empty-state .icon { font-size: 4rem; margin-bottom: 1rem; }
+    @media (max-width: 600px) { .booking-card { flex-direction: column; } .booking-card .poster-thumb { width: 60px; height: 90px; } }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" class="logo"><span class="icon">🎬</span><span>CINEBOOK</span></a>
+      <div class="nav-links">
+        <a href="/">Movies</a>
+        <a href="/my_bookings.html" class="active">My Bookings</a>
+        <div id="auth-links"></div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="bookings-page">
+    <div class="section-title"><span>🎟 My Bookings</span><span class="line"></span></div>
+    <div id="bookings-list"><div class="spinner"></div></div>
+  </div>
+
+  <footer class="footer"><p>© 2026 CineBook. All rights reserved.</p></footer>
+
+  <script src="/js/api.js"></script>
+  <script>
+    async function loadBookings() {
+      if (!api.isLoggedIn()) { window.location.href = "/login.html"; return; }
+      try {
+        const bookings = await api.get("/bookings/me");
+        const list = document.getElementById("bookings-list");
+
+        if (bookings.length === 0) {
+          list.innerHTML = `<div class="empty-state"><div class="icon">🎬</div><h3>No Bookings Yet</h3><p>Browse movies and book your first ticket!</p><a href="/" class="btn btn-primary mt-2">Browse Movies</a></div>`;
+          return;
+        }
+
+        list.innerHTML = bookings.map(b => {
+          const dt = b.show_datetime ? new Date(b.show_datetime) : null;
+          const dateStr = dt ? dt.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
+          const timeStr = dt ? dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "";
+          return `
+            <div class="card booking-card">
+              <div class="booking-details">
+                <h3>${b.movie_title}</h3>
+                <div class="booking-meta">
+                  <span>🏢 ${b.theater_name}</span>
+                  <span>📍 ${b.theater_city || ""}</span>
+                  <span>📅 ${dateStr} ${timeStr}</span>
+                  <span>🖥 Screen ${b.screen_no}</span>
+                </div>
+                <div class="seats-display">${(b.seats || []).map(s => `<span class="seat-chip">${s}</span>`).join("")}</div>
+                <div class="booking-actions">
+                  <span class="price">₹${b.total_price}</span>
+                  <span class="status-badge status-${b.status}">${b.status}</span>
+                  ${b.status === "confirmed" ? `<button class="btn btn-sm btn-ghost" onclick="cancelBooking('${b.id}')">Cancel</button>` : ""}
+                </div>
+              </div>
+            </div>`;
+        }).join("");
+      } catch (e) {
+        document.getElementById("bookings-list").innerHTML = `<p style="color:var(--accent-red);">${e.message}</p>`;
+      }
+    }
+
+    async function cancelBooking(id) {
+      if (!confirm("Are you sure you want to cancel this booking?")) return;
+      try {
+        await api.put(`/bookings/${id}/cancel`);
+        showToast("Booking cancelled", "success");
+        loadBookings();
+      } catch (e) {
+        showToast(e.message, "error");
+      }
+    }
+
+    loadBookings();
+  </script>
+</body>
+</html>

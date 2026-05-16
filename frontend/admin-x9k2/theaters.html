@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Theaters — Admin</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/admin-x9k2/css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="sidebar-logo"><h2>🎬 CineBook</h2><small>Admin Panel</small></div>
+      <nav>
+        <a href="/admin-x9k2/dashboard.html"><span>📊</span><span>Dashboard</span></a>
+        <a href="/admin-x9k2/movies.html"><span>🎬</span><span>Movies</span></a>
+        <a href="/admin-x9k2/theaters.html" class="active"><span>🏢</span><span>Theaters</span></a>
+        <a href="/admin-x9k2/shows.html"><span>🎭</span><span>Shows</span></a>
+        <a href="/admin-x9k2/bookings.html"><span>🎟</span><span>Bookings</span></a>
+      </nav>
+      <div class="sidebar-footer"><button class="btn btn-sm btn-ghost" style="width:100%;" onclick="api.logout()">🚪 Logout</button></div>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-header">
+        <h1>🏢 Manage Theaters</h1>
+        <button class="btn btn-primary" onclick="showForm()">+ Add Theater</button>
+      </div>
+
+      <div class="glass-card" id="form-card" style="display:none;padding:2rem;margin-bottom:2rem;">
+        <h3 id="form-title">Add Theater</h3>
+        <form id="theater-form" class="admin-form" style="margin-top:1rem;">
+          <input type="hidden" id="edit-id">
+          <div class="form-row">
+            <div class="form-group"><label>Name *</label><input type="text" id="f-name" class="form-control" required></div>
+            <div class="form-group"><label>City</label><input type="text" id="f-city" class="form-control"></div>
+          </div>
+          <div class="form-group"><label>Location / Address</label><input type="text" id="f-location" class="form-control"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Number of Screens</label><input type="number" id="f-screens" class="form-control" value="2" min="1"></div>
+            <div class="form-group"><label>Rows per Screen</label><input type="number" id="f-rows" class="form-control" value="8" min="1" max="26"></div>
+          </div>
+          <div class="form-group"><label>Seats per Row</label><input type="number" id="f-cols" class="form-control" value="10" min="1" max="30"></div>
+          <div style="display:flex;gap:1rem;margin-top:1rem;">
+            <button type="submit" class="btn btn-primary" id="save-btn">Save</button>
+            <button type="button" class="btn btn-ghost" onclick="document.getElementById('form-card').style.display='none'">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <table class="admin-table">
+        <thead><tr><th>Name</th><th>City</th><th>Location</th><th>Screens</th><th>Actions</th></tr></thead>
+        <tbody id="tbody"><tr><td colspan="5" style="text-align:center;">Loading...</td></tr></tbody>
+      </table>
+    </main>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    if (!api.isAdmin()) window.location.href = "/admin-x9k2/login.html";
+
+    function showForm() {
+      document.getElementById("form-card").style.display = "block";
+      document.getElementById("form-title").textContent = "Add Theater";
+      document.getElementById("theater-form").reset();
+      document.getElementById("edit-id").value = "";
+      document.getElementById("f-screens").value = "2";
+      document.getElementById("f-rows").value = "8";
+      document.getElementById("f-cols").value = "10";
+    }
+
+    async function loadTheaters() {
+      try {
+        const theaters = await api.get("/theaters");
+        const tbody = document.getElementById("tbody");
+        if (theaters.length === 0) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No theaters yet</td></tr>`; return; }
+        tbody.innerHTML = theaters.map(t => `
+          <tr>
+            <td style="font-weight:600;">${t.name}</td>
+            <td>${t.city}</td>
+            <td>${t.location}</td>
+            <td>${(t.screens || []).length} screens</td>
+            <td>
+              <button class="btn btn-sm btn-ghost" onclick='editTheater(${JSON.stringify(t).replace(/'/g,"&#39;")})'>Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteTheater('${t.id}')">Delete</button>
+            </td>
+          </tr>
+        `).join("");
+      } catch (e) { showToast(e.message, "error"); }
+    }
+
+    function editTheater(t) {
+      showForm();
+      document.getElementById("form-title").textContent = "Edit Theater";
+      document.getElementById("edit-id").value = t.id;
+      document.getElementById("f-name").value = t.name;
+      document.getElementById("f-city").value = t.city;
+      document.getElementById("f-location").value = t.location;
+      document.getElementById("f-screens").value = (t.screens || []).length || 1;
+      if (t.screens && t.screens[0]) {
+        document.getElementById("f-rows").value = t.screens[0].rows || 8;
+        document.getElementById("f-cols").value = t.screens[0].cols || 10;
+      }
+    }
+
+    document.getElementById("theater-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("save-btn");
+      btn.disabled = true;
+      const editId = document.getElementById("edit-id").value;
+      const body = {
+        name: document.getElementById("f-name").value,
+        city: document.getElementById("f-city").value,
+        location: document.getElementById("f-location").value,
+        screen_count: parseInt(document.getElementById("f-screens").value),
+        rows: parseInt(document.getElementById("f-rows").value),
+        cols: parseInt(document.getElementById("f-cols").value),
+      };
+      try {
+        if (editId) { await api.put(`/theaters/${editId}`, body); }
+        else { await api.post("/theaters", body); }
+        showToast(editId ? "Theater updated!" : "Theater added!", "success");
+        document.getElementById("form-card").style.display = "none";
+        loadTheaters();
+      } catch (err) { showToast(err.message, "error"); }
+      btn.disabled = false;
+    });
+
+    async function deleteTheater(id) {
+      if (!confirm("Delete this theater?")) return;
+      try { await api.delete(`/theaters/${id}`); showToast("Deleted", "success"); loadTheaters(); }
+      catch (e) { showToast(e.message, "error"); }
+    }
+
+    loadTheaters();
+  </script>
+</body>
+</html>

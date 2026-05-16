@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Bookings — Admin</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/admin-x9k2/css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="sidebar-logo"><h2>🎬 CineBook</h2><small>Admin Panel</small></div>
+      <nav>
+        <a href="/admin-x9k2/dashboard.html"><span>📊</span><span>Dashboard</span></a>
+        <a href="/admin-x9k2/movies.html"><span>🎬</span><span>Movies</span></a>
+        <a href="/admin-x9k2/theaters.html"><span>🏢</span><span>Theaters</span></a>
+        <a href="/admin-x9k2/shows.html"><span>🎭</span><span>Shows</span></a>
+        <a href="/admin-x9k2/bookings.html" class="active"><span>🎟</span><span>Bookings</span></a>
+      </nav>
+      <div class="sidebar-footer"><button class="btn btn-sm btn-ghost" style="width:100%;" onclick="api.logout()">🚪 Logout</button></div>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-header">
+        <h1>🎟 All Bookings</h1>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm btn-ghost" onclick="filterBookings('')">All</button>
+          <button class="btn btn-sm btn-ghost" onclick="filterBookings('confirmed')" style="color:var(--accent-green);">Confirmed</button>
+          <button class="btn btn-sm btn-ghost" onclick="filterBookings('cancelled')" style="color:var(--accent-red);">Cancelled</button>
+        </div>
+      </div>
+
+      <table class="admin-table">
+        <thead><tr><th>User</th><th>Movie</th><th>Theater</th><th>Show</th><th>Seats</th><th>Amount</th><th>Status</th><th>Booked</th></tr></thead>
+        <tbody id="tbody"><tr><td colspan="8" style="text-align:center;">Loading...</td></tr></tbody>
+      </table>
+
+      <div style="display:flex;justify-content:center;gap:1rem;margin-top:1.5rem;" id="pagination"></div>
+    </main>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script>
+    if (!api.isAdmin()) window.location.href = "/admin-x9k2/login.html";
+
+    let currentPage = 1;
+    let currentStatus = "";
+
+    async function loadBookings(page = 1, status = "") {
+      currentPage = page;
+      currentStatus = status;
+      try {
+        let url = `/admin/bookings?page=${page}&per_page=15`;
+        if (status) url += `&status=${status}`;
+        const data = await api.get(url);
+        const tbody = document.getElementById("tbody");
+
+        if (data.bookings.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text-muted);">No bookings found</td></tr>`;
+          document.getElementById("pagination").innerHTML = "";
+          return;
+        }
+
+        tbody.innerHTML = data.bookings.map(b => {
+          const dt = b.show_datetime ? new Date(b.show_datetime) : null;
+          const dateStr = dt ? dt.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—";
+          const timeStr = dt ? dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "";
+          const bookedAt = b.booked_at ? new Date(b.booked_at).toLocaleDateString("en-IN") : "—";
+          return `
+            <tr>
+              <td>${b.user_name}<br><small style="color:var(--text-muted);">${b.user_email}</small></td>
+              <td style="font-weight:600;">${b.movie_title}</td>
+              <td>${b.theater_name}<br><small style="color:var(--text-muted);">${b.theater_city}</small></td>
+              <td>${dateStr} ${timeStr}<br><small>Screen ${b.screen_no}</small></td>
+              <td>${(b.seats || []).join(", ")}</td>
+              <td style="color:var(--accent-gold);font-weight:600;">₹${b.total_price}</td>
+              <td><span class="status-badge status-${b.status}">${b.status}</span></td>
+              <td style="font-size:0.8rem;">${bookedAt}</td>
+            </tr>`;
+        }).join("");
+
+        // Pagination
+        const totalPages = Math.ceil(data.total / data.per_page);
+        const pag = document.getElementById("pagination");
+        if (totalPages <= 1) { pag.innerHTML = ""; return; }
+        let html = "";
+        if (page > 1) html += `<button class="btn btn-sm btn-ghost" onclick="loadBookings(${page-1},'${status}')">← Prev</button>`;
+        html += `<span style="color:var(--text-muted);padding:8px;">Page ${page} of ${totalPages}</span>`;
+        if (page < totalPages) html += `<button class="btn btn-sm btn-ghost" onclick="loadBookings(${page+1},'${status}')">Next →</button>`;
+        pag.innerHTML = html;
+      } catch (e) { showToast(e.message, "error"); }
+    }
+
+    function filterBookings(status) { loadBookings(1, status); }
+
+    loadBookings();
+  </script>
+</body>
+</html>
