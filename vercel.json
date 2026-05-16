@@ -3,21 +3,36 @@
   "builds": [
     {
       "src": "backend/app.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "frontend/**",
-      "use": "@vercel/static"
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "50mb"
+      }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/backend/app.py"
+      "dest": "backend/app.py"
     },
     {
-      "src": "/(.*)",
-      "dest": "/frontend/$1"
+      "src": "/css/(.*)",
+      "dest": "frontend/css/$1"
+    },
+    {
+      "src": "/js/(.*)",
+      "dest": "frontend/js/$1"
+    },
+    {
+      "src": "/admin-x9k2/(.*)",
+      "dest": "frontend/admin-x9k2/$1"
+    },
+    {
+      "src": "/(.+\\.html)",
+      "dest": "frontend/$1"
+    },
+    {
+      "src": "/",
+      "dest": "frontend/index.html"
     }
   ]
 }
