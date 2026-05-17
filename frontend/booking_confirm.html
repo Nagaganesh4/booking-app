@@ -144,7 +144,7 @@
       const opt = {
         margin:       0.5,
         filename:     `CineBook_Ticket_${data.booking_id.substring(0,6)}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
+        image:        { type: 'jpeg', quality: 1.0 },
         html2canvas:  { scale: 2, useCORS: true },
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
       };
@@ -154,13 +154,27 @@
       btn.textContent = "Generating PDF...";
       btn.disabled = true;
 
-      html2pdf().set(opt).from(globalTicketHTML).save().then(() => {
+      // Create a temporary container to hold the ticket in the DOM
+      // We place it at 0,0 but behind everything (z-index: -9999) so it's invisible to the user
+      // but html2canvas can render its full width/height perfectly.
+      const tempContainer = document.createElement("div");
+      tempContainer.style.position = "absolute";
+      tempContainer.style.top = "0px";
+      tempContainer.style.left = "0px";
+      tempContainer.style.width = "800px";
+      tempContainer.style.zIndex = "-9999";
+      tempContainer.innerHTML = globalTicketHTML;
+      document.body.appendChild(tempContainer);
+
+      html2pdf().set(opt).from(tempContainer).save().then(() => {
         btn.textContent = originalText;
         btn.disabled = false;
+        document.body.removeChild(tempContainer); // Cleanup
       }).catch(err => {
         console.error("PDF generation failed", err);
         btn.textContent = originalText;
         btn.disabled = false;
+        document.body.removeChild(tempContainer); // Cleanup
         alert("Failed to generate PDF. Please try again.");
       });
     }
