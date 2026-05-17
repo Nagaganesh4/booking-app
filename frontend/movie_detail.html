@@ -27,15 +27,15 @@
       .movie-hero .info .meta-row { justify-content: center; }
     }
   </style>
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
   <nav class="navbar">
     <div class="container">
-      <a href="/" class="logo"><span class="icon">🎬</span><span>CINEBOOK</span></a>
+      <a href="/" class="logo"><span class="icon"><i data-lucide="film"></i></span><span>CINEBOOK</span></a>
       <div class="nav-links">
         <a href="/">Movies</a>
-        <a href="/my_bookings.html">My Bookings</a>
-        <div id="auth-links"></div>
+                <div id="auth-links"></div>
       </div>
     </div>
   </nav>
@@ -94,10 +94,10 @@
             <div class="show-info-left">
               <span class="theater-name">🏢 ${s.theater_name}</span>
               <span class="show-meta">
-                <span>📍 ${s.theater_city}</span>
-                <span>🖥 Screen ${s.screen_no}</span>
-                <span>📅 ${dateStr}</span>
-                <span>🕐 ${timeStr}</span>
+                <span style="display:flex;align-items:center;gap:4px;"><i data-lucide="map-pin" style="width:16px;"></i> ${s.theater_city}</span>
+                <span style="display:flex;align-items:center;gap:4px;"><i data-lucide="monitor" style="width:16px;"></i> Screen ${s.screen_no}</span>
+                <span style="display:flex;align-items:center;gap:4px;"><i data-lucide="calendar" style="width:16px;"></i> ${dateStr}</span>
+                <span style="display:flex;align-items:center;gap:4px;"><i data-lucide="clock" style="width:16px;"></i> ${timeStr}</span>
               </span>
             </div>
             <div style="display:flex;align-items:center;gap:1rem;">
@@ -123,5 +123,6 @@
 
     load();
   </script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>

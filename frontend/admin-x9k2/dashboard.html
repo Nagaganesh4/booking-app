@@ -7,47 +7,48 @@
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/admin-x9k2/css/admin.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
   <div class="admin-layout">
     <!-- Sidebar -->
     <aside class="admin-sidebar">
       <div class="sidebar-logo">
-        <h2>🎬 CineBook</h2>
+        <h2 style="display:flex;align-items:center;gap:8px;"><i data-lucide="film"></i> CineBook</h2>
         <small>Admin Panel</small>
       </div>
       <nav>
-        <a href="/admin-x9k2/dashboard.html" class="active"><span>📊</span><span>Dashboard</span></a>
-        <a href="/admin-x9k2/movies.html"><span>🎬</span><span>Movies</span></a>
-        <a href="/admin-x9k2/theaters.html"><span>🏢</span><span>Theaters</span></a>
-        <a href="/admin-x9k2/shows.html"><span>🎭</span><span>Shows</span></a>
-        <a href="/admin-x9k2/bookings.html"><span>🎟</span><span>Bookings</span></a>
+        <a href="/admin-x9k2/dashboard.html" class="active"><span><i data-lucide="bar-chart-2" style="width:18px;"></i></span><span>Dashboard</span></a>
+        <a href="/admin-x9k2/movies.html"><span><i data-lucide="film" style="width:18px;"></i></span><span>Movies</span></a>
+        <a href="/admin-x9k2/theaters.html"><span><i data-lucide="building" style="width:18px;"></i></span><span>Theaters</span></a>
+        <a href="/admin-x9k2/shows.html"><span><i data-lucide="monitor-play" style="width:18px;"></i></span><span>Shows</span></a>
+        <a href="/admin-x9k2/bookings.html"><span><i data-lucide="ticket" style="width:18px;"></i></span><span>Bookings</span></a>
       </nav>
       <div class="sidebar-footer">
-        <button class="btn btn-sm btn-ghost" style="width:100%;" onclick="api.logout()">🚪 Logout</button>
+        <button class="btn btn-sm btn-ghost" style="width:100%;" onclick="api.logout()"><i data-lucide="log-out" style="width:16px;height:16px;"></i> Logout</button>
       </div>
     </aside>
 
     <!-- Main -->
     <main class="admin-main">
       <div class="admin-header">
-        <h1>📊 Dashboard</h1>
+        <h1 style="display:flex;align-items:center;gap:12px;"><i data-lucide="layout-dashboard"></i> Dashboard</h1>
         <span class="text-muted" id="admin-name"></span>
       </div>
 
       <!-- Stats -->
       <div class="stats-grid" id="stats-grid">
-        <div class="stat-card"><div class="stat-icon">🎟</div><div class="stat-value" id="stat-bookings">—</div><div class="stat-label">Total Bookings</div></div>
-        <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value" id="stat-revenue">—</div><div class="stat-label">Revenue</div></div>
-        <div class="stat-card"><div class="stat-icon">🎬</div><div class="stat-value" id="stat-movies">—</div><div class="stat-label">Active Movies</div></div>
-        <div class="stat-card"><div class="stat-icon">🏢</div><div class="stat-value" id="stat-theaters">—</div><div class="stat-label">Theaters</div></div>
-        <div class="stat-card"><div class="stat-icon">🎭</div><div class="stat-value" id="stat-shows">—</div><div class="stat-label">Shows</div></div>
-        <div class="stat-card"><div class="stat-icon">❌</div><div class="stat-value" id="stat-cancelled">—</div><div class="stat-label">Cancelled</div></div>
+        <div class="stat-card"><div class="stat-icon"><i data-lucide="ticket"></i></div><div class="stat-value" id="stat-bookings">—</div><div class="stat-label">Total Bookings</div></div>
+        <div class="stat-card"><div class="stat-icon"><i data-lucide="indian-rupee"></i></div><div class="stat-value" id="stat-revenue">—</div><div class="stat-label">Revenue</div></div>
+        <div class="stat-card"><div class="stat-icon"><i data-lucide="film"></i></div><div class="stat-value" id="stat-movies">—</div><div class="stat-label">Active Movies</div></div>
+        <div class="stat-card"><div class="stat-icon"><i data-lucide="building"></i></div><div class="stat-value" id="stat-theaters">—</div><div class="stat-label">Theaters</div></div>
+        <div class="stat-card"><div class="stat-icon"><i data-lucide="monitor-play"></i></div><div class="stat-value" id="stat-shows">—</div><div class="stat-label">Shows</div></div>
+        <div class="stat-card"><div class="stat-icon"><i data-lucide="x-circle"></i></div><div class="stat-value" id="stat-cancelled">—</div><div class="stat-label">Cancelled</div></div>
       </div>
 
       <!-- Chart -->
       <div class="chart-container">
-        <h3>📈 Top Movies by Bookings</h3>
+        <h3 style="display:flex;align-items:center;gap:8px;"><i data-lucide="trending-up"></i> Top Movies by Bookings</h3>
         <canvas id="topMoviesChart" height="100"></canvas>
       </div>
 
@@ -125,5 +126,6 @@
 
     loadDashboard();
   </script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>

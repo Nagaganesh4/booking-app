@@ -24,11 +24,12 @@
     .empty-state .icon { font-size: 4rem; margin-bottom: 1rem; }
     @media (max-width: 600px) { .booking-card { flex-direction: column; } .booking-card .poster-thumb { width: 60px; height: 90px; } }
   </style>
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
   <nav class="navbar">
     <div class="container">
-      <a href="/" class="logo"><span class="icon">🎬</span><span>CINEBOOK</span></a>
+      <a href="/" class="logo"><span class="icon"><i data-lucide="film"></i></span><span>CINEBOOK</span></a>
       <div class="nav-links">
         <a href="/">Movies</a>
         <a href="/my_bookings.html" class="active">My Bookings</a>
@@ -66,10 +67,10 @@
               <div class="booking-details">
                 <h3>${b.movie_title}</h3>
                 <div class="booking-meta">
-                  <span>🏢 ${b.theater_name}</span>
-                  <span>📍 ${b.theater_city || ""}</span>
-                  <span>📅 ${dateStr} ${timeStr}</span>
-                  <span>🖥 Screen ${b.screen_no}</span>
+                  <span style="display:flex;align-items:center;gap:4px;"><i data-lucide="building" style="width:16px;"></i> ${b.theater_name}</span>
+                  <span style="display:flex;align-items:center;gap:4px;"><i data-lucide="map-pin" style="width:16px;"></i> ${b.theater_city || ""}</span>
+                  <span style="display:flex;align-items:center;gap:4px;"><i data-lucide="calendar" style="width:16px;"></i> ${dateStr} ${timeStr}</span>
+                  <span style="display:flex;align-items:center;gap:4px;"><i data-lucide="monitor" style="width:16px;"></i> Screen ${b.screen_no}</span>
                 </div>
                 <div class="seats-display">${(b.seats || []).map(s => `<span class="seat-chip">${s}</span>`).join("")}</div>
                 <div class="booking-actions">
@@ -98,5 +99,6 @@
 
     loadBookings();
   </script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>

@@ -6,19 +6,20 @@
   <title>Manage Theaters — Admin</title>
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/admin-x9k2/css/admin.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
   <div class="admin-layout">
     <aside class="admin-sidebar">
-      <div class="sidebar-logo"><h2>🎬 CineBook</h2><small>Admin Panel</small></div>
+      <div class="sidebar-logo"><h2 style="display:flex;align-items:center;gap:8px;"><i data-lucide="film"></i> CineBook</h2><small>Admin Panel</small></div>
       <nav>
-        <a href="/admin-x9k2/dashboard.html"><span>📊</span><span>Dashboard</span></a>
-        <a href="/admin-x9k2/movies.html"><span>🎬</span><span>Movies</span></a>
-        <a href="/admin-x9k2/theaters.html" class="active"><span>🏢</span><span>Theaters</span></a>
-        <a href="/admin-x9k2/shows.html"><span>🎭</span><span>Shows</span></a>
-        <a href="/admin-x9k2/bookings.html"><span>🎟</span><span>Bookings</span></a>
+        <a href="/admin-x9k2/dashboard.html"><span><i data-lucide="bar-chart-2" style="width:18px;"></i></span><span>Dashboard</span></a>
+        <a href="/admin-x9k2/movies.html"><span><i data-lucide="film" style="width:18px;"></i></span><span>Movies</span></a>
+        <a href="/admin-x9k2/theaters.html" class="active"><span><i data-lucide="building" style="width:18px;"></i></span><span>Theaters</span></a>
+        <a href="/admin-x9k2/shows.html"><span><i data-lucide="monitor-play" style="width:18px;"></i></span><span>Shows</span></a>
+        <a href="/admin-x9k2/bookings.html"><span><i data-lucide="ticket" style="width:18px;"></i></span><span>Bookings</span></a>
       </nav>
-      <div class="sidebar-footer"><button class="btn btn-sm btn-ghost" style="width:100%;" onclick="api.logout()">🚪 Logout</button></div>
+      <div class="sidebar-footer"><button class="btn btn-sm btn-ghost" style="width:100%;" onclick="api.logout()"><i data-lucide="log-out" style="width:16px;height:16px;"></i> Logout</button></div>
     </aside>
 
     <main class="admin-main">
@@ -134,5 +135,6 @@
 
     loadTheaters();
   </script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>

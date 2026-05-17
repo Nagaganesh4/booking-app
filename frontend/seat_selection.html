@@ -6,15 +6,15 @@
   <title>Select Seats — CineBook</title>
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/seat.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
   <nav class="navbar">
     <div class="container">
-      <a href="/" class="logo"><span class="icon">🎬</span><span>CINEBOOK</span></a>
+      <a href="/" class="logo"><span class="icon"><i data-lucide="film"></i></span><span>CINEBOOK</span></a>
       <div class="nav-links">
         <a href="/">Movies</a>
-        <a href="/my_bookings.html">My Bookings</a>
-        <div id="auth-links"></div>
+                <div id="auth-links"></div>
       </div>
     </div>
   </nav>
@@ -71,11 +71,11 @@
         <div class="show-info">
           <h2>${showData.movie_title}</h2>
           <div class="details">
-            <span>🏢 ${showData.theater_name}</span>
-            <span>📍 ${showData.theater_city}</span>
-            <span>🖥 Screen ${showData.screen_no}</span>
-            <span>📅 ${dateStr}</span>
-            <span>🕐 ${timeStr}</span>
+            <span style="display:flex;align-items:center;gap:4px;"><i data-lucide="building" style="width:16px;"></i> ${showData.theater_name}</span>
+            <span style="display:flex;align-items:center;gap:4px;"><i data-lucide="map-pin" style="width:16px;"></i> ${showData.theater_city}</span>
+            <span style="display:flex;align-items:center;gap:4px;"><i data-lucide="monitor" style="width:16px;"></i> Screen ${showData.screen_no}</span>
+            <span style="display:flex;align-items:center;gap:4px;"><i data-lucide="calendar" style="width:16px;"></i> ${dateStr}</span>
+            <span style="display:flex;align-items:center;gap:4px;"><i data-lucide="clock" style="width:16px;"></i> ${timeStr}</span>
           </div>
         </div>
 
@@ -111,36 +111,30 @@
     /* ── Payment Modal UI ─────────────────────────────────────────────────── */
     const paymentModalHTML = `
       <div class="modal-backdrop hidden" id="payment-modal">
-        <div class="modal glass-card" style="max-width: 400px;">
+        <div class="modal glass-card" style="max-width: 400px; text-align: center;">
           <h3 style="display:flex; justify-content:space-between; align-items:center;">
-            Payment Details
+            Complete Payment
             <span style="cursor:pointer; color:var(--text-muted);" onclick="closePaymentModal()">✕</span>
           </h3>
           <p class="text-muted" style="margin-bottom: 1.5rem; font-size: 0.9rem;">
-            This is a mock payment gateway for testing. No real money is charged.
+            Scan the QR code below using any UPI app (GPay, PhonePe, Paytm) to pay securely.
           </p>
-          <div class="form-group">
-            <label>Card Number</label>
-            <input type="text" class="form-control" value="4111 1111 1111 1111" readonly style="font-family:monospace; letter-spacing:1px; background:rgba(0,0,0,0.2);">
+          
+          <div style="background: white; padding: 1rem; border-radius: 8px; display: inline-block; margin-bottom: 1rem;">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=9160068402@ybl%26pn=CineBook" alt="UPI QR Code" style="width: 200px; height: 200px;">
           </div>
-          <div style="display:flex; gap:1rem; margin-bottom: 1.5rem;">
-            <div class="form-group" style="flex:1;">
-              <label>Expiry</label>
-              <input type="text" class="form-control" value="12/28" readonly style="background:rgba(0,0,0,0.2);">
-            </div>
-            <div class="form-group" style="flex:1;">
-              <label>CVV</label>
-              <input type="password" class="form-control" value="123" readonly style="background:rgba(0,0,0,0.2);">
-            </div>
-          </div>
+          
+          <p style="font-weight: 600; color: var(--accent-gold); margin-bottom: 0.5rem; font-size: 1.1rem;" id="pay-amount-display">Amount: ₹0</p>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; letter-spacing: 1px;">UPI ID: <span style="color: white;">9160068402@ybl</span></p>
+
           <button class="btn btn-primary" id="pay-btn" style="width:100%;" onclick="processPayment()">
-            Pay <span id="pay-amount"></span>
+            I have completed the payment
           </button>
           
-          <div id="payment-loader" class="hidden" style="text-align:center; padding: 2rem 0;">
+          <div id="payment-loader" class="hidden" style="text-align:center; padding: 1rem 0;">
             <div class="spinner" style="margin: 0 auto 1rem auto; width: 30px; height: 30px;"></div>
-            <p style="color:var(--accent-gold); font-weight: 500;">Processing Payment...</p>
-            <p style="font-size: 0.8rem; color:var(--text-muted);">Please do not refresh the page.</p>
+            <p style="color:var(--accent-gold); font-weight: 500;">Verifying Payment...</p>
+            <p style="font-size: 0.8rem; color:var(--text-muted);">Please wait, do not close this window.</p>
           </div>
         </div>
       </div>
@@ -149,7 +143,7 @@
 
     function openPaymentModal() {
       if (selectedSeats.length === 0) return;
-      document.getElementById("pay-amount").textContent = `₹${selectedSeats.length * showData.price}`;
+      document.getElementById("pay-amount-display").textContent = `Amount: ₹${selectedSeats.length * showData.price}`;
       document.getElementById("payment-modal").classList.remove("hidden");
     }
 
@@ -162,9 +156,8 @@
       const payBtn = document.getElementById("pay-btn");
       const loader = document.getElementById("payment-loader");
       
-      // Hide form, show loader
+      // Hide button, show loader
       payBtn.style.display = "none";
-      document.querySelectorAll('#payment-modal .form-group').forEach(el => el.style.display = 'none');
       loader.classList.remove("hidden");
 
       // Simulate 2 seconds of payment processing network delay
@@ -187,7 +180,6 @@
         closePaymentModal();
         // Reset modal state
         payBtn.style.display = "block";
-        document.querySelectorAll('#payment-modal .form-group').forEach(el => el.style.display = 'block');
         loader.classList.add("hidden");
       }
     }
@@ -232,5 +224,6 @@
 
     loadSeatMap();
   </script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>

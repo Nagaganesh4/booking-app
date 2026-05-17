@@ -6,6 +6,7 @@
   <meta name="description" content="CineBook — Book movie tickets online. Browse latest movies, choose seats, and book instantly.">
   <title>CineBook — Movie Ticket Booking</title>
   <link rel="stylesheet" href="/css/main.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 
@@ -13,13 +14,12 @@
   <nav class="navbar">
     <div class="container">
       <a href="/" class="logo">
-        <span class="icon">🎬</span>
+        <span class="icon"><i data-lucide="film"></i></span>
         <span>CINEBOOK</span>
       </a>
       <div class="nav-links">
         <a href="/" class="active">Movies</a>
-        <a href="/my_bookings.html">My Bookings</a>
-        <div id="auth-links"></div>
+                <div id="auth-links"></div>
       </div>
     </div>
   </nav>
@@ -41,13 +41,13 @@
   <!-- Search & Filter -->
   <section class="section" id="movies">
     <div class="section-title">
-      <span>🎥 Now Showing</span>
+      <span style="display:flex;align-items:center;gap:8px;"><i data-lucide="clapperboard"></i> Now Showing</span>
       <span class="line"></span>
     </div>
 
     <div class="search-bar">
       <div class="search-input-wrap">
-        <span class="icon">🔍</span>
+        <span class="icon"><i data-lucide="search" style="width:18px;"></i></span>
         <input type="text" id="search-input" placeholder="Search movies...">
       </div>
       <div class="genre-tabs" id="genre-tabs">
@@ -146,5 +146,6 @@
 
     loadMovies();
   </script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>

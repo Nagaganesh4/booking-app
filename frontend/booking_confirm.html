@@ -48,6 +48,7 @@
     .cutout.right { right: -15px; }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
   <div class="confirm-page">
@@ -69,7 +70,7 @@
       const timeStr = dt ? dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "";
 
       card.innerHTML = `
-        <div class="checkmark">✓</div>
+        <div class="checkmark"><i data-lucide="check-circle" style="width:40px;height:40px;color:#27ae60;"></i></div>
         <h2>Booking Confirmed!</h2>
         <p class="subtitle">Your tickets have been booked successfully</p>
         <div class="ticket-info">
@@ -136,7 +137,12 @@
       const hiddenDiv = document.createElement("div");
       hiddenDiv.id = "hidden-ticket-container";
       hiddenDiv.style.position = "absolute";
-      hiddenDiv.style.left = "-9999px";
+      hiddenDiv.style.top = "0";
+      hiddenDiv.style.left = "0";
+      hiddenDiv.style.width = "800px";
+      hiddenDiv.style.opacity = "0";
+      hiddenDiv.style.pointerEvents = "none";
+      hiddenDiv.style.zIndex = "-1000";
       hiddenDiv.innerHTML = ticketHTML;
       document.body.appendChild(hiddenDiv);
 
@@ -166,5 +172,6 @@
       });
     }
   </script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>
