@@ -61,6 +61,7 @@
   <script>
     const data = JSON.parse(sessionStorage.getItem("booking_confirmation") || "null");
     const card = document.getElementById("confirm-card");
+    let globalTicketHTML = "";
 
     if (!data) {
       card.innerHTML = `<p style="color:var(--text-muted);">No booking data found.</p><a href="/" class="btn btn-primary mt-2">Back to Home</a>`;
@@ -88,9 +89,9 @@
         </div>
       `;
 
-      // Build hidden ticket for PDF generation
-      const ticketHTML = `
-        <div id="pdf-ticket" style="background:#fff; color:#000; width:100%; font-family:sans-serif;">
+      // Build ticket HTML string for PDF generation
+      globalTicketHTML = `
+        <div style="background:#fff; color:#000; width:800px; font-family:sans-serif; box-sizing: border-box;">
           <div style="background:#0a0e17; padding:20px; text-align:center;">
             <h1 style="color:#f5a623; margin:0; font-family:'Bebas Neue', cursive; font-size:36px; letter-spacing:3px;">CINEBOOK</h1>
             <p style="color:#fff; margin:5px 0 0 0; font-size:14px;">Official Movie Ticket</p>
@@ -133,31 +134,18 @@
           </div>
         </div>
       `;
-      
-      const hiddenDiv = document.createElement("div");
-      hiddenDiv.id = "hidden-ticket-container";
-      hiddenDiv.style.position = "absolute";
-      hiddenDiv.style.top = "0";
-      hiddenDiv.style.left = "0";
-      hiddenDiv.style.width = "800px";
-      hiddenDiv.style.opacity = "0";
-      hiddenDiv.style.pointerEvents = "none";
-      hiddenDiv.style.zIndex = "-1000";
-      hiddenDiv.innerHTML = ticketHTML;
-      document.body.appendChild(hiddenDiv);
 
       sessionStorage.removeItem("booking_confirmation");
     }
 
     function downloadTicket() {
-      const element = document.getElementById("pdf-ticket");
-      if (!element) return;
+      if (!globalTicketHTML) return;
       
       const opt = {
         margin:       0.5,
         filename:     `CineBook_Ticket_${data.booking_id.substring(0,6)}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
+        html2canvas:  { scale: 2, useCORS: true },
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
       };
       
@@ -166,9 +154,14 @@
       btn.textContent = "Generating PDF...";
       btn.disabled = true;
 
-      html2pdf().set(opt).from(element).save().then(() => {
+      html2pdf().set(opt).from(globalTicketHTML).save().then(() => {
         btn.textContent = originalText;
         btn.disabled = false;
+      }).catch(err => {
+        console.error("PDF generation failed", err);
+        btn.textContent = originalText;
+        btn.disabled = false;
+        alert("Failed to generate PDF. Please try again.");
       });
     }
   </script>
