@@ -32,8 +32,8 @@
       </div>
 
       <table class="admin-table">
-        <thead><tr><th>User</th><th>Movie</th><th>Theater</th><th>Show</th><th>Seats</th><th>Amount</th><th>Status</th><th>Booked</th></tr></thead>
-        <tbody id="tbody"><tr><td colspan="8" style="text-align:center;">Loading...</td></tr></tbody>
+        <thead><tr><th>User</th><th>Movie</th><th>Theater</th><th>Show</th><th>Seats</th><th>Amount</th><th>Status</th><th>Booked</th><th>Action</th></tr></thead>
+        <tbody id="tbody"><tr><td colspan="9" style="text-align:center;">Loading...</td></tr></tbody>
       </table>
 
       <div style="display:flex;justify-content:center;gap:1rem;margin-top:1.5rem;" id="pagination"></div>
@@ -57,7 +57,7 @@
         const tbody = document.getElementById("tbody");
 
         if (data.bookings.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text-muted);">No bookings found</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-muted);">No bookings found</td></tr>`;
           document.getElementById("pagination").innerHTML = "";
           return;
         }
@@ -67,6 +67,9 @@
           const dateStr = dt ? dt.toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "—";
           const timeStr = dt ? dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "";
           const bookedAt = b.booked_at ? new Date(b.booked_at).toLocaleDateString("en-IN") : "—";
+          const actionHtml = b.status === 'confirmed' 
+            ? `<button class="btn btn-sm btn-outline" style="color:var(--accent-red);border-color:var(--accent-red);" onclick="refundBooking('${b.id}')">Refund</button>`
+            : `—`;
           return `
             <tr>
               <td>${b.user_name}<br><small style="color:var(--text-muted);">${b.user_email}</small></td>
@@ -77,6 +80,7 @@
               <td style="color:var(--accent-gold);font-weight:600;">₹${b.total_price}</td>
               <td><span class="status-badge status-${b.status}">${b.status}</span></td>
               <td style="font-size:0.8rem;">${bookedAt}</td>
+              <td>${actionHtml}</td>
             </tr>`;
         }).join("");
 
@@ -93,6 +97,17 @@
     }
 
     function filterBookings(status) { loadBookings(1, status); }
+
+    async function refundBooking(bookingId) {
+      if (!confirm("Are you sure you want to refund and cancel this booking? The seats will be released immediately.")) return;
+      try {
+        const res = await api.put(`/admin/bookings/${bookingId}/refund`);
+        showToast(res.message, "success");
+        loadBookings(currentPage, currentStatus); // reload table
+      } catch (e) {
+        showToast(e.message, "error");
+      }
+    }
 
     loadBookings();
   </script>

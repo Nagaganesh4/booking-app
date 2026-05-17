@@ -106,3 +106,23 @@ def all_bookings():
         })
 
     return jsonify({"total": total, "page": page, "per_page": per_page, "bookings": result})
+
+
+@admin_bp.route("/bookings/<booking_id>/refund", methods=["PUT"])
+@admin_required
+def refund_booking(booking_id):
+    db = get_db()
+    try:
+        oid = ObjectId(booking_id)
+    except Exception:
+        return jsonify({"error": "Invalid booking ID"}), 400
+
+    booking = db.bookings.find_one({"_id": oid})
+    if not booking:
+        return jsonify({"error": "Booking not found"}), 404
+    if booking.get("status") == "refunded" or booking.get("status") == "cancelled":
+        return jsonify({"error": "Booking is already cancelled or refunded"}), 400
+
+    db.bookings.update_one({"_id": oid}, {"$set": {"status": "refunded"}})
+    return jsonify({"message": "Booking has been refunded successfully"})
+
