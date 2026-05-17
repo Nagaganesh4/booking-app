@@ -91,7 +91,7 @@
 
       // Build ticket HTML string for PDF generation
       globalTicketHTML = `
-        <div style="background:#fff; color:#000; width:800px; font-family:sans-serif; box-sizing: border-box;">
+        <div style="background:#fff; color:#000; width:800px; height:350px; font-family:sans-serif; box-sizing: border-box; overflow: hidden;">
           <div style="background:#0a0e17; padding:20px; text-align:center;">
             <h1 style="color:#f5a623; margin:0; font-family:'Bebas Neue', cursive; font-size:36px; letter-spacing:3px;">CINEBOOK</h1>
             <p style="color:#fff; margin:5px 0 0 0; font-size:14px;">Official Movie Ticket</p>
@@ -145,7 +145,7 @@
         margin:       0.5,
         filename:     `CineBook_Ticket_${data.booking_id.substring(0,6)}.pdf`,
         image:        { type: 'jpeg', quality: 1.0 },
-        html2canvas:  { scale: 2, useCORS: true },
+        html2canvas:  { scale: 2, useCORS: true, windowWidth: 1000, windowHeight: 800 },
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
       };
       
@@ -154,27 +154,15 @@
       btn.textContent = "Generating PDF...";
       btn.disabled = true;
 
-      // Create a temporary container to hold the ticket in the DOM
-      // We place it at 0,0 but behind everything (z-index: -9999) so it's invisible to the user
-      // but html2canvas can render its full width/height perfectly.
-      const tempContainer = document.createElement("div");
-      tempContainer.style.position = "absolute";
-      tempContainer.style.top = "0px";
-      tempContainer.style.left = "0px";
-      tempContainer.style.width = "800px";
-      tempContainer.style.zIndex = "-9999";
-      tempContainer.innerHTML = globalTicketHTML;
-      document.body.appendChild(tempContainer);
-
-      html2pdf().set(opt).from(tempContainer).save().then(() => {
+      // Pass the HTML string directly. html2pdf handles the mounting internally.
+      // Explicit windowWidth/windowHeight prevents clipping inside the internal iframe.
+      html2pdf().set(opt).from(globalTicketHTML).save().then(() => {
         btn.textContent = originalText;
         btn.disabled = false;
-        document.body.removeChild(tempContainer); // Cleanup
       }).catch(err => {
         console.error("PDF generation failed", err);
         btn.textContent = originalText;
         btn.disabled = false;
-        document.body.removeChild(tempContainer); // Cleanup
         alert("Failed to generate PDF. Please try again.");
       });
     }
