@@ -141,30 +141,59 @@
     function downloadTicket() {
       if (!globalTicketHTML) return;
       
-      const opt = {
-        margin:       0.5,
-        filename:     `CineBook_Ticket_${data.booking_id.substring(0,6)}.pdf`,
-        image:        { type: 'jpeg', quality: 1.0 },
-        html2canvas:  { scale: 2, useCORS: true, windowWidth: 1000, windowHeight: 800 },
-        jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
-      };
-      
       const btn = document.querySelector(".btn-primary");
       const originalText = btn.textContent;
       btn.textContent = "Generating PDF...";
       btn.disabled = true;
 
-      // Pass the HTML string directly. html2pdf handles the mounting internally.
-      // Explicit windowWidth/windowHeight prevents clipping inside the internal iframe.
-      html2pdf().set(opt).from(globalTicketHTML).save().then(() => {
-        btn.textContent = originalText;
-        btn.disabled = false;
-      }).catch(err => {
-        console.error("PDF generation failed", err);
-        btn.textContent = originalText;
-        btn.disabled = false;
-        alert("Failed to generate PDF. Please try again.");
-      });
+      // Create an isolated iframe to prevent Quirks mode (which breaks flexbox) 
+      // and to prevent window clipping issues from the main DOM.
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "absolute";
+      iframe.style.width = "850px";
+      iframe.style.height = "400px";
+      iframe.style.top = "-9999px";
+      document.body.appendChild(iframe);
+
+      const doc = iframe.contentWindow.document;
+      doc.open();
+      doc.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { margin: 0; padding: 0; background: #fff; }
+          </style>
+        </head>
+        <body>
+          ${globalTicketHTML}
+        </body>
+        </html>
+      `);
+      doc.close();
+
+      const opt = {
+        margin:       0.2,
+        filename:     `CineBook_Ticket_${data.booking_id.substring(0,6)}.pdf`,
+        image:        { type: 'jpeg', quality: 1.0 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+      };
+
+      // We need to wait a tiny bit to ensure the QR code image loads in the iframe
+      setTimeout(() => {
+        html2pdf().set(opt).from(doc.body).save().then(() => {
+          btn.textContent = originalText;
+          btn.disabled = false;
+          document.body.removeChild(iframe);
+        }).catch(err => {
+          console.error("PDF generation failed", err);
+          btn.textContent = originalText;
+          btn.disabled = false;
+          document.body.removeChild(iframe);
+          alert("Failed to generate PDF. Please try again.");
+        });
+      }, 500);
     }
   </script>
   <script>lucide.createIcons();</script>
